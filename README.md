@@ -4,7 +4,7 @@ Aquesta pàgina descriu la pràctica de GEI-LP (edició 2021-2022 Q2). La vostra
 
 En diem un *doble* intèrpret perquè funciona en el sentit informàtic (interpreta un programa) i en el sentit musical (interpreta una peça de música).
 
-![JSBach](bach.png)
+![JSBach](img/bach.png)
 
 
 ## Bach
@@ -44,7 +44,7 @@ genera la melodia Si, La, Do.
 L'execució del programa anterior produïria la sortida del missatge `Hallo Bach` per pantalla.
 A més, generaria la partitura següent:
 
-![bac](bac.png)
+![bac](img/bac.png)
 
 juntament amb aquests fitxers:
 
@@ -140,7 +140,7 @@ HanoiRec n src dst aux |:
 
 La partitura que es genera en aquest programa és:
 
-![hanoi](hanoi.png)
+![hanoi](img/hanoi.png)
 
 i aquí la podeu sentir:
 
@@ -454,4 +454,4 @@ no pengeu el vostre projecte en repositoris públics.
 
 - ffmpeg: https://www.ffmpeg.org/
 
-![Firma](firma.png)
+![Firma](img/firma.png)
