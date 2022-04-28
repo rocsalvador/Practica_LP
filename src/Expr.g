@@ -3,30 +3,36 @@ grammar Expr;
 root
         : procDef+ EOF ;
 
-
-procDef
-        : PROCNAME ID* '|:' statements* ':|'
+statements
+        : (statement)*
         ;
 
-statements
-        : IF expr '|:' statements* ':|' (ELSE '|:' statements* ':|')?
-        | WHILE expr '|:' statements ':|'
-        | READ ID
-        | ID ASSIG expr
-        | WRITE expr+
-        | REPROD
-        | PROCNAME expr*
+procDef
+        : PROCNAME ID* '|:' statements ':|'
+        ;
+
+statement
+        : IF expr '|:' statements ':|' (ELSE '|:' statements ':|')?     # if
+        | WHILE expr '|:' statements ':|'                               # while
+        | READ ID                                                       # read
+        | ID ASSIG expr                                                 # assign                              
+        | WRITE expr+                                                   # write
+        | REPROD expr                                                   # reprod
+        | PROCNAME expr*                                                # procCall
+        | REMOVE expr                                                   # remove
+        | ID PUSH expr                                                  # push
         ;
 
 expr
-        : '(' expr ')'
-        | expr op=(SUM|MINUS) expr
-        | expr op=(NEQ|GT|GE) expr
-        | ID '[' ID ']'
-        | '#' ID
-        | NUM
-        | ID
-        | STRING
+        : '(' expr ')'                          # parenthesis
+        | expr (SUM|MINUS) expr                 # arithmetic
+        | expr (EQ|NEQ|GT|GE|LT|LE) expr        # relational
+        | ID '[' expr ']'                       # arrayAccess
+        | '#' ID                                # arraySize
+        | '{' NOTE* '}'                         # arrayDecl
+        | NUM                                   # intValue
+        | ID                                    # id
+        | STRING                                # string
         ;
 
 READ    : '<?>' ;
@@ -40,6 +46,9 @@ ELSE    : 'else' ;
 WHILE   : 'while' ;
 GT      : '>' ;
 GE      : '>=' ;
+LT      : '<' ;
+LE      : '<=' ;
+EQ      : '=' ;
 NEQ     : '/=' ;
 NOTE    : ('C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B') | ('C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B') NUM ;
 ID      : ('a'..'z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;

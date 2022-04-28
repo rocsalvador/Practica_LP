@@ -1,6 +1,7 @@
 from antlr4 import *
 from ExprLexer import ExprLexer
 from ExprParser import ExprParser
+from TreeVisitor import TreeVisitor
 import sys
 
 
@@ -13,7 +14,7 @@ def main():
     token_stream = CommonTokenStream(lexer)
     parser = ExprParser(token_stream)
     tree = parser.root()
-    print(tree.toStringTree(recog=parser))
-
+    visitor = TreeVisitor()
+    visitor.visit(tree)
 
 main()
