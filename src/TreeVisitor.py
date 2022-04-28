@@ -11,6 +11,14 @@ class TreeVisitor(ExprVisitor):
         # self.outFile = open("a.out", "w")
         self.funcTable = {}
 
+    def visitRoot(self, ctx: ExprParser.RootContext):
+        for procDef in ctx.procDef():
+            if procDef.PROCNAME().getText() == 'Main':
+                mainCtx = procDef
+            else:
+                self.visit(procDef)
+        self.visit(mainCtx)
+
     
     def visitParenthesis(self, ctx: ExprParser.ParenthesisContext):
         return self.visit(ctx.expr())
