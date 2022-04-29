@@ -1,3 +1,6 @@
+from asyncore import write
+
+
 if __name__ is not None and "." in __name__:
     from .ExprParser import ExprParser
     from .ExprVisitor import ExprVisitor
@@ -6,10 +9,11 @@ else:
     from ExprVisitor import ExprVisitor
 
 class TreeVisitor(ExprVisitor):
-    def __init__(self):
+    def __init__(self, outFileName='default'):
         self.symTableStack = []
-        # self.outFile = open("a.out", "w")
         self.funcTable = {}
+        self.reprodNotes = []
+        self.outFileName = outFileName
 
     def visitRoot(self, ctx: ExprParser.RootContext):
         for procDef in ctx.procDef():
@@ -18,6 +22,40 @@ class TreeVisitor(ExprVisitor):
             else:
                 self.visit(procDef)
         self.visit(mainCtx)
+        outFile = open(self.outFileName + ".lily", "w")
+        outFile.write("\\version \"2.22.1\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = 240\n\t\t")
+        notes = ""
+        for note in self.reprodNotes:
+            mod = note % 7
+            if mod == 0:
+                strnote = 'a'
+            elif mod == 1:
+                strnote = 'b'
+            elif mod == 2:
+                strnote = 'c'
+            elif mod == 3:
+                strnote = 'd'
+            elif mod == 4:
+                strnote = 'e'
+            elif mod == 5:
+                strnote = 'f'
+            elif mod == 6:
+                strnote = 'g'
+            if note > 22:
+                x = int((note - 23) / 7) + 1
+                for _ in range(x):
+                    strnote += '\''
+            elif note < 16:
+                if note > 8:
+                    strnote += ','
+                elif note > 1:
+                    strnote += ',,'
+                else:
+                    strnote += ',,,'
+                
+            notes +=  strnote + ' '
+        outFile.write(notes)
+        outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}")
 
     
     def visitParenthesis(self, ctx: ExprParser.ParenthesisContext):
@@ -55,6 +93,29 @@ class TreeVisitor(ExprVisitor):
 
         self.visitChildren(self.funcTable[ctx.PROCNAME().getText()][0])
         self.symTableStack.pop()
+
+
+    def visitReprod(self, ctx: ExprParser.ReprodContext):
+        if ctx.note():
+            self.reprodNotes.append(self.visit(ctx.note()))
+        elif ctx.ID():
+            scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+            if type(scopeSymTable[ctx.ID().getText()]) is list:
+                self.reprodNotes.extend(scopeSymTable[ctx.ID().getText()])
+            else:
+                self.reprodNotes.append(scopeSymTable[ctx.ID().getText()])
+
+
+    def visitRemove(self, ctx: ExprParser.RemoveContext):
+        scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+        i = self.visit(ctx.expr())
+        del scopeSymTable[ctx.ID().getText()][i-1]
+
+
+    def visitPush(self, ctx: ExprParser.PushContext):
+        scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+        value = self.visit(ctx.expr())
+        scopeSymTable[ctx.ID().getText()].append(value)
 
 
     def visitArithmetic(self, ctx):
@@ -109,6 +170,10 @@ class TreeVisitor(ExprVisitor):
         scopeSymTable[ctx.ID().getText()] = value
         return 0
 
+    
+    def visitNoteExpr(self, ctx: ExprParser.NoteExprContext):
+        return self.visit(ctx.note())
+        
 
     def visitArraySize(self, ctx: ExprParser.ArraySizeContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
@@ -118,33 +183,34 @@ class TreeVisitor(ExprVisitor):
     def visitArrayAccess(self, ctx: ExprParser.ArrayAccessContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
         i = self.visit(ctx.expr())
-        return scopeSymTable[ctx.ID().getText()][i]
+        return scopeSymTable[ctx.ID().getText()][i-1]
         
 
     def visitArrayDecl(self, ctx: ExprParser.ArrayDeclContext):
-        notes = []
-        for note in ctx.NOTE():
-            notes.append(self.getNoteValue(note.getText()))
-        return notes
+        array = []
+        for expr in ctx.expr():
+            array.append(self.visit(expr))
+        return array
 
 
-    def getNoteValue(self, note):
+    def visitNote(self, ctx: ExprParser.NoteContext):
         value = 0
+        note = ctx.NOTE().getText()
         if len(note) == 1:
-            if note[0] == 'A':
-                value = 21
-            elif note[0] == 'B':
-                value = 22
-            elif note[0] == 'C':
+            if note == 'C':
                 value = 23
-            elif note[0] == 'D':
+            elif note == 'D':
                 value = 24
-            elif note[0] == 'E':
+            elif note == 'E':
                 value = 25
-            elif note[0] == 'F':
+            elif note == 'F':
                 value = 26
-            elif note[0] == 'G':
+            elif note == 'G':
                 value = 27
+            elif note == 'A':
+                value = 28
+            elif note == 'B':
+                value = 29
         else:
             if note[0] == 'A':
                 value = 0
@@ -160,7 +226,10 @@ class TreeVisitor(ExprVisitor):
                 value = 5
             elif note[0] == 'G':
                 value = 6
-            value += int(note[1]) * 7
+            if note[0] == 'A' or note[0] == 'B':
+                value += int(note[1]) * 7
+            else:
+                value += (int(note[1]) - 1) * 7
         return value
 
 

@@ -17,10 +17,14 @@ statement
         | READ ID                                                       # read
         | ID ASSIG expr                                                 # assign                              
         | WRITE expr+                                                   # write
-        | REPROD expr                                                   # reprod
+        | REPROD (note|ID)                                              # reprod
         | PROCNAME expr*                                                # procCall
-        | REMOVE expr                                                   # remove
+        | REMOVE ID '[' expr ']'                                        # remove
         | ID PUSH expr                                                  # push
+        ;
+
+note
+        : NOTE 
         ;
 
 expr
@@ -29,10 +33,11 @@ expr
         | expr (EQ|NEQ|GT|GE|LT|LE) expr        # relational
         | ID '[' expr ']'                       # arrayAccess
         | '#' ID                                # arraySize
-        | '{' NOTE* '}'                         # arrayDecl
+        | '{' expr* '}'                         # arrayDecl
         | NUM                                   # intValue
         | ID                                    # id
         | STRING                                # string
+        | note                                  # noteExpr
         ;
 
 READ    : '<?>' ;
