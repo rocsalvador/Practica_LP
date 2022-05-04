@@ -29,7 +29,8 @@ note
 
 expr
         : '(' expr ')'                          # parenthesis
-        | expr (SUM|MINUS) expr                 # arithmetic
+        | expr (MUL|DIV|MOD) expr                   # arithmetic
+        | expr (SUM|MINUS) expr             # arithmetic
         | expr (EQ|NEQ|GT|GE|LT|LE) expr        # relational
         | ID '[' expr ']'                       # arrayAccess
         | '#' ID                                # arraySize
@@ -64,5 +65,8 @@ fragment
 ESC_SEQ : '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\') ;
 SUM     : '+' ;
 MINUS   : '-' ;
+MUL     : '*' ;
+DIV     : '/' ;
+MOD     : '%' ;
 COMMENT : '~~~' ~('\n'|'\r')* '\r'? '~~~' -> skip ;
 WS      : [ \n]+ -> skip ;
