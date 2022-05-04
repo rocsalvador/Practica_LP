@@ -56,14 +56,11 @@ class TreeVisitor(ExprVisitor):
         self.symTableStack.pop()
 
     def visitReprod(self, ctx: ExprParser.ReprodContext):
-        if ctx.note():
-            self.reprodNotes.append(self.visit(ctx.note()))
-        elif ctx.ID():
-            scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
-            if type(scopeSymTable[ctx.ID().getText()]) is list:
-                self.reprodNotes.extend(scopeSymTable[ctx.ID().getText()])
-            else:
-                self.reprodNotes.append(scopeSymTable[ctx.ID().getText()])
+        val = self.visit(ctx.expr())
+        if type(val) is list:
+            self.reprodNotes.extend(val)
+        else:
+            self.reprodNotes.append(val)
 
     def visitRemove(self, ctx: ExprParser.RemoveContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
@@ -101,9 +98,9 @@ class TreeVisitor(ExprVisitor):
             self.symTableStack.pop()
 
     def visitWrite(self, ctx: ExprParser.WriteContext):
-        for expr in ctx.expr():
-            ret = self.visit(expr)
-            print(str(ret) + " ", end="")
+        for child in ctx.writeParams().getChildren():
+            val = self.visit(child)
+            print(val, end=" ")
         print()
 
     def visitRelational(self, ctx: ExprParser.RelationalContext):

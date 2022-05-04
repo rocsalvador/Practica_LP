@@ -11,13 +11,21 @@ procDef
         : PROCNAME ID* '|:' statements ':|'
         ;
 
+string
+        : STRING
+        ;
+
+writeParams
+        : (string|expr)+
+        ;
+
 statement
         : IF expr '|:' statements ':|' (ELSE '|:' statements ':|')?     # if
         | WHILE expr '|:' statements ':|'                               # while
         | READ ID                                                       # read
         | ID ASSIG expr                                                 # assign                              
-        | WRITE expr+                                                   # write
-        | REPROD (note|ID)                                              # reprod
+        | WRITE writeParams                                             # write
+        | REPROD expr                                                   # reprod
         | PROCNAME expr*                                                # procCall
         | REMOVE ID '[' expr ']'                                        # remove
         | ID PUSH expr                                                  # push
@@ -29,15 +37,14 @@ note
 
 expr
         : '(' expr ')'                          # parenthesis
-        | expr (MUL|DIV|MOD) expr                   # arithmetic
-        | expr (SUM|MINUS) expr             # arithmetic
+        | expr (MUL|DIV|MOD) expr               # arithmetic
+        | expr (SUM|MINUS) expr                 # arithmetic
         | expr (EQ|NEQ|GT|GE|LT|LE) expr        # relational
         | ID '[' expr ']'                       # arrayAccess
         | '#' ID                                # arraySize
         | '{' expr* '}'                         # arrayDecl
         | NUM                                   # intValue
         | ID                                    # id
-        | STRING                                # string
         | note                                  # noteExpr
         ;
 
