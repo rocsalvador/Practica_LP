@@ -8,7 +8,7 @@ def writeNotes(notes, outFileName):
     outFile = open(outFileName + ".lily", "w")
     outFile.write("\\version \"2.22.1\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = 240\n\t\t")
     outFile.write(notes)
-    outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}")
+    outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
 
 
 def main():

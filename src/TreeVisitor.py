@@ -44,15 +44,24 @@ class TreeVisitor(ExprVisitor):
         scopeSymTable[ctx.ID().getText()] = int(input())
 
     def visitProcCall(self, ctx: ExprParser.ProcCallContext):
+        procName = ctx.PROCNAME().getText()
+        if not procName in self.funcTable:
+            raise Exception(procName + " is not defined")
+
+        if len(ctx.expr()) >= len(self.funcTable[procName]):
+            raise Exception("Too many arguments in " + procName + " call")
+        elif len(ctx.expr()) < len(self.funcTable[procName]) - 1:
+            raise Exception("Too few arguments in " + procName + " call")
+
         scopeSymTable = {}
         i = 1
         for expr in ctx.expr():
             value = self.visit(expr)
-            scopeSymTable[self.funcTable[ctx.PROCNAME().getText()][i]] = value
+            scopeSymTable[self.funcTable[procName][i]] = value
             i += 1
         self.symTableStack.append(scopeSymTable)
 
-        self.visitChildren(self.funcTable[ctx.PROCNAME().getText()][0])
+        self.visitChildren(self.funcTable[procName][0])
         self.symTableStack.pop()
 
     def visitReprod(self, ctx: ExprParser.ReprodContext):
@@ -83,15 +92,21 @@ class TreeVisitor(ExprVisitor):
         elif ctx.MUL():
             return value_1 * value_2
         elif ctx.DIV():
+            if value_2 == 0:
+                raise Exception("Division by 0")
             return int(value_1 / value_2)
         elif ctx.MOD():
             return value_1 % value_2
 
     def visitProcDef(self, ctx: ExprParser.ProcDefContext):
-        if ctx.PROCNAME().getText() != 'Main':
-            self.funcTable[ctx.PROCNAME().getText()] = [ctx]
+        procName = ctx.PROCNAME().getText()
+        if procName in self.funcTable:
+            raise Exception(procName + " is already defined")
+
+        if procName != 'Main':
+            self.funcTable[procName] = [ctx]
             for param in ctx.ID():
-                self.funcTable[ctx.PROCNAME().getText()].append(param.getText())
+                self.funcTable[procName].append(param.getText())
         else:
             self.symTableStack.append({})
             self.visitChildren(ctx)
@@ -136,6 +151,10 @@ class TreeVisitor(ExprVisitor):
     def visitArrayAccess(self, ctx: ExprParser.ArrayAccessContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
         i = self.visit(ctx.expr())
+
+        if i > len(scopeSymTable[ctx.ID().getText()]):
+            raise Exception("Array access out of bound")
+        
         return scopeSymTable[ctx.ID().getText()][i-1]
 
     def visitArrayDecl(self, ctx: ExprParser.ArrayDeclContext):
