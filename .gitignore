@@ -1,5 +1,9 @@
-src/Expr*.interp 
-src/Expr*.py 
-src/Expr*.tokens 
+src/jsbach*.interp 
+src/jsbach*.py 
+src/jsbach*.tokens 
 src/__pycache__/
+*.midi
+*.wav
+*.pdf
+*.lily
 out/
