@@ -10,10 +10,12 @@ else:
 
 
 class TreeVisitor(ExprVisitor):
-    def __init__(self):
+    def __init__(self, initProc="Main", params=[]):
         self.symTableStack = []
         self.funcTable = {}
         self.reprodNotes = []
+        self.initProc = initProc
+        self.params = params
 
     def visitRoot(self, ctx: ExprParser.RootContext):
         for procDef in ctx.procDef():
@@ -103,7 +105,7 @@ class TreeVisitor(ExprVisitor):
         if procName in self.funcTable:
             raise Exception(procName + " is already defined")
 
-        if procName != 'Main':
+        if procName != self.initProc:
             self.funcTable[procName] = [ctx]
             for param in ctx.ID():
                 self.funcTable[procName].append(param.getText())
