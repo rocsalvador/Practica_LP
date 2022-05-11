@@ -1,4 +1,5 @@
 from antlr4 import *
+from antlr4.error.ErrorListener import ErrorListener
 import sys
 import os
 from jsbachLexer import jsbachLexer
@@ -239,6 +240,13 @@ class TreeVisitor(jsbachVisitor):
         return strNotes
 
 
+class jsbachErrorListener(ErrorListener):
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        super().syntaxError(recognizer, offendingSymbol, line, column, msg, e)
+        raise Exception("Syntax error in " + str(line) + ":" + str(column) + " -> " + msg)
+
+
+
 def writeNotes(notes, outFileName):
     with open(outFileName + ".lily", "w") as outFile:
         outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = 240\n\t\t")
@@ -255,10 +263,11 @@ def main():
         exit(1)
 
     input_stream = FileStream(sys.argv[1])
-    
     lexer = jsbachLexer(input_stream)
+    lexer.addErrorListener(jsbachErrorListener())
     token_stream = CommonTokenStream(lexer)
     parser = jsbachParser(token_stream)
+    parser.addErrorListener(jsbachErrorListener())
     tree = parser.root()
 
     if nArgs >= 3:
@@ -271,14 +280,16 @@ def main():
         visitor = TreeVisitor()
     visitor.visit(tree)
 
-    outFileName = sys.argv[1].split(".jsb")[0]
+    outFileName = os.path.basename(sys.argv[1]).split(".jsb")[0]
     writeNotes(visitor.getNotes(), outFileName)
 
-    if os.system("lilypond " + outFileName + ".lily") > 0:
-        exit(1)   
+    if os.system("command -v timidity lilypond") != 0:
+        print("Please install timidity and lilypond in your machine")
+        exit(1)
+
+    os.system("lilypond " + outFileName + ".lily")
     os.system("timidity -Ow -o " + outFileName + ".wav " + outFileName + ".midi")
 
-    # if ffplay command exists, play the wav file
     if os.system("command -v ffplay") == 0:
         os.system("ffplay -nodisp -autoexit " + outFileName + ".wav")
 
