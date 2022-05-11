@@ -240,10 +240,10 @@ class TreeVisitor(jsbachVisitor):
 
 
 def writeNotes(notes, outFileName):
-    outFile = open(outFileName + ".lily", "w")
-    outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = 240\n\t\t")
-    outFile.write(notes)
-    outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
+    with open(outFileName + ".lily", "w") as outFile:
+        outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = 240\n\t\t")
+        outFile.write(notes)
+        outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
 
 
 def main():
@@ -281,5 +281,6 @@ def main():
     # if ffplay command exists, play the wav file
     if os.system("command -v ffplay") == 0:
         os.system("ffplay -nodisp -autoexit " + outFileName + ".wav")
+
 
 main()
