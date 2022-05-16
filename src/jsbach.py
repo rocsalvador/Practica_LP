@@ -11,16 +11,26 @@ class TreeVisitor(jsbachVisitor):
     def __init__(self, initProc="Main", params=[]):
         self.symTableStack = []
         self.funcTable = {}
-        self.reprodNotes = []
+        self.strNotes = ""
         self.initProc = initProc
         self.params = params
+        self.tempo = 120
+
+    def writeNotes(self, outFileName):
+        with open(outFileName + ".lily", "w") as outFile:
+            outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = " + str(self.tempo) + "\n\t\t")
+            outFile.write(self.strNotes)
+            outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
 
     def visitRoot(self, ctx: jsbachParser.RootContext):
+        mainCtx = None
         for procDef in ctx.procDef():
-            if procDef.PROCNAME().getText() == 'Main':
+            if procDef.PROCNAME().getText() == self.initProc:
                 mainCtx = procDef
             else:
                 self.visit(procDef)
+        if mainCtx is None:
+            raise Exception(self.initProc + " procedure is not defined")
         self.visit(mainCtx)
 
     def visitParenthesis(self, ctx: jsbachParser.ParenthesisContext):
@@ -65,12 +75,33 @@ class TreeVisitor(jsbachVisitor):
         self.symTableStack.pop()
 
     def visitReprod(self, ctx: jsbachParser.ReprodContext):
-        val = self.visit(ctx.expr())
-        if type(val) is list:
-            self.reprodNotes.extend(val)
-        else:
-            self.reprodNotes.append(val)
+        value1 = self.visit(ctx.expr(0))
+        noteTy = ''
+        valueTy = 4
+        if ctx.expr(1):
+            valueTy = self.visit(ctx.expr(1))
 
+        if type(value1) is list:
+            i = 0
+            for note in value1:
+                if type(note) is list:
+                    self.strNotes += '< '
+                    for x in note:
+                        self.strNotes += self.getLilyNote(x) + ' '
+                    self.strNotes += '>'
+                else:
+                    self.strNotes += self.getLilyNote(note)
+
+                if type(valueTy) is int:
+                    noteTy = str(valueTy)
+                else:
+                    noteTy = str(valueTy[i])
+                self.strNotes += noteTy
+                i += 1
+        else:
+            self.strNotes += self.getLilyNote(value1) + str(valueTy)
+        self.strNotes += ' '
+        
     def visitRemove(self, ctx: jsbachParser.RemoveContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
         i = self.visit(ctx.expr())
@@ -136,9 +167,12 @@ class TreeVisitor(jsbachVisitor):
             return int(value_1 <= value_2)
 
     def visitAssign(self, ctx: jsbachParser.AssignContext):
-        scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
-        value = self.visit(ctx.expr())
-        scopeSymTable[ctx.ID().getText()] = value
+        if ctx.TEMPO():
+            self.tempo = self.visit(ctx.expr())
+        else:
+            scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+            value = self.visit(ctx.expr())
+            scopeSymTable[ctx.ID().getText()] = value
         return 0
 
     def visitNoteExpr(self, ctx: jsbachParser.NoteExprContext):
@@ -206,38 +240,34 @@ class TreeVisitor(jsbachVisitor):
     def visitString(self, ctx: jsbachParser.StringContext):
         return ctx.getText()[1:len(ctx.getText())-1]
 
-    def getNotes(self):
-        strNotes = ""
-        for note in self.reprodNotes:
-            mod = note % 7
-            if mod == 0:
-                strNote = 'a'
-            elif mod == 1:
-                strNote = 'b'
-            elif mod == 2:
-                strNote = 'c'
-            elif mod == 3:
-                strNote = 'd'
-            elif mod == 4:
-                strNote = 'e'
-            elif mod == 5:
-                strNote = 'f'
-            elif mod == 6:
-                strNote = 'g'
-            if note > 22:
-                x = int((note - 23) / 7) + 1
-                for _ in range(x):
-                    strNote += '\''
-            elif note < 16:
-                if note > 8:
-                    strNote += ','
-                elif note > 1:
-                    strNote += ',,'
-                else:
-                    strNote += ',,,'
-
-            strNotes += strNote + ' '
-        return strNotes
+    def getLilyNote(self, note):
+        mod = note % 7
+        if mod == 0:
+            strNote = 'a'
+        elif mod == 1:
+            strNote = 'b'
+        elif mod == 2:
+            strNote = 'c'
+        elif mod == 3:
+            strNote = 'd'
+        elif mod == 4:
+            strNote = 'e'
+        elif mod == 5:
+            strNote = 'f'
+        elif mod == 6:
+            strNote = 'g'
+        if note > 22:
+            x = int((note - 23) / 7) + 1
+            for _ in range(x):
+                strNote += '\''
+        elif note < 16:
+            if note > 8:
+                strNote += ','
+            elif note > 1:
+                strNote += ',,'
+            else:
+                strNote += ',,,'
+        return strNote
 
 
 class jsbachErrorListener(ErrorListener):
@@ -246,20 +276,15 @@ class jsbachErrorListener(ErrorListener):
         raise Exception("Syntax error in " + str(line) + ":" + str(column) + " -> " + msg)
 
 
-
-def writeNotes(notes, outFileName):
-    with open(outFileName + ".lily", "w") as outFile:
-        outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = 240\n\t\t")
-        outFile.write(notes)
-        outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
-
-
 def main():
     nArgs = len(sys.argv)
 
     if nArgs < 2:
         print("Usage:")
         print("python3 path/to/jsbach.py source_file.jsb [initial_procedure] [arguments]")
+        exit(1)
+
+    if os.system("antlr4 -Dlanguage=Python3 -no-listener -visitor src/jsbach.g4") > 0:
         exit(1)
 
     input_stream = FileStream(sys.argv[1])
@@ -281,11 +306,7 @@ def main():
     visitor.visit(tree)
 
     outFileName = os.path.basename(sys.argv[1]).split(".jsb")[0]
-    writeNotes(visitor.getNotes(), outFileName)
-
-    if os.system("command -v timidity lilypond") != 0:
-        print("Please install timidity and lilypond in your machine")
-        exit(1)
+    visitor.writeNotes(outFileName)
 
     os.system("lilypond " + outFileName + ".lily")
     os.system("timidity -Ow -o " + outFileName + ".wav " + outFileName + ".midi")

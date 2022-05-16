@@ -23,9 +23,9 @@ statement
         : IF expr '|:' statements ':|' (ELSE '|:' statements ':|')?     # if
         | WHILE expr '|:' statements ':|'                               # while
         | READ ID                                                       # read
-        | ID ASSIG expr                                                 # assign                              
+        | (ID|TEMPO) ASSIG expr                                         # assign                              
         | WRITE writeParams                                             # write
-        | REPROD expr                                                   # reprod
+        | REPROD expr expr?                                           # reprod
         | PROCNAME expr*                                                # procCall
         | REMOVE ID '[' expr ']'                                        # remove
         | ID PUSH expr                                                  # push
@@ -66,6 +66,7 @@ NEQ     : '/=' ;
 NOTE    : ('C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B') [0-8]? ;
 ID      : ('a'..'z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 PROCNAME: ('A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')+ ;
+TEMPO   : '_tp' ;
 NUM     : [0-9]+ ;
 STRING  : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
 fragment
