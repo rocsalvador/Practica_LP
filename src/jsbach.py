@@ -1,3 +1,4 @@
+from asyncore import write
 from antlr4 import *
 from antlr4.error.ErrorListener import ErrorListener
 import sys
@@ -15,10 +16,13 @@ class TreeVisitor(jsbachVisitor):
         self.initProc = initProc
         self.params = params
         self.tempo = 120
+        self.time = [4, 4]
 
     def writeNotes(self, outFileName):
         with open(outFileName + ".lily", "w") as outFile:
-            outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {\n\t\t\\tempo 4 = " + str(self.tempo) + "\n\t\t")
+            outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {")
+            outFile.write("\n\t\t\\time " + str(self.time[0]) + "/" + str(self.time[1]))
+            outFile.write(" \n\t\t\\tempo 4 = " + str(self.tempo) + "\n\t\t")
             outFile.write(self.strNotes)
             outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
 
@@ -167,11 +171,15 @@ class TreeVisitor(jsbachVisitor):
             return int(value_1 <= value_2)
 
     def visitAssign(self, ctx: jsbachParser.AssignContext):
+        value = self.visit(ctx.expr())
         if ctx.TEMPO():
-            self.tempo = self.visit(ctx.expr())
+            self.tempo = value
+        elif ctx.TIME():
+            if type(value) is not list or len(value) != 2:
+                raise Exception("Time feature must be assigned with a two length array")
+            self.time = value
         else:
             scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
-            value = self.visit(ctx.expr())
             scopeSymTable[ctx.ID().getText()] = value
         return 0
 
