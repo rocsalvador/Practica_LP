@@ -1,4 +1,3 @@
-from asyncore import write
 from random import Random
 from time import time
 from antlr4 import *
@@ -292,7 +291,8 @@ class TreeVisitor(jsbachVisitor):
 class JsbachErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         super().syntaxError(recognizer, offendingSymbol, line, column, msg, e)
-        raise Exception   ("Syntax error in " + str(line) + ":" + str(column) + " -> " + msg)
+        raise Exception("Syntax error in " + str(line) + ":" + str(column) + " -> " + msg)
+
 
 def main():
     nArgs = len(sys.argv)
@@ -333,4 +333,5 @@ def main():
         os.system("ffplay -nodisp -autoexit " + outFileName + ".wav")
 
 
-main()
+if __name__ == '__main__':
+    main()
