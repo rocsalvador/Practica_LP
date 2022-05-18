@@ -87,6 +87,11 @@ class TreeVisitor(jsbachVisitor):
         if ctx.expr(1):
             valueTy = self.visit(ctx.expr(1))
 
+        if (type(valueTy) is list and
+            type(value1) is list and 
+            len(value1) != len(valueTy)):
+                raise Exception("The length of the array of notes and the array of note types differ")
+
         if type(value1) is list:
             i = 0
             for note in value1:
@@ -284,11 +289,10 @@ class TreeVisitor(jsbachVisitor):
         return Random.randint(rand, self.visit(ctx.expr(0)), self.visit(ctx.expr(1)))
 
 
-class jsbachErrorListener(ErrorListener):
+class JsbachErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         super().syntaxError(recognizer, offendingSymbol, line, column, msg, e)
-        raise Exception("Syntax error in " + str(line) + ":" + str(column) + " -> " + msg)
-
+        raise Exception   ("Syntax error in " + str(line) + ":" + str(column) + " -> " + msg)
 
 def main():
     nArgs = len(sys.argv)
@@ -303,10 +307,10 @@ def main():
 
     input_stream = FileStream(sys.argv[1])
     lexer = jsbachLexer(input_stream)
-    lexer.addErrorListener(jsbachErrorListener())
+    lexer.addErrorListener(JsbachErrorListener())
     token_stream = CommonTokenStream(lexer)
     parser = jsbachParser(token_stream)
-    parser.addErrorListener(jsbachErrorListener())
+    parser.addErrorListener(JsbachErrorListener())
     tree = parser.root()
 
     if nArgs >= 3:
