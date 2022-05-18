@@ -45,6 +45,7 @@ expr
         | '{' expr* '}'                         # arrayDecl
         | NUM                                   # intValue
         | ID                                    # id
+        | RAND expr expr                        # random
         | note                                  # noteExpr
         ;
 
@@ -68,6 +69,7 @@ ID      : ('a'..'z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 PROCNAME: ('A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')+ ;
 TEMPO   : '_tp' ;
 TIME    : '_tm' ;
+RAND    : '_Rand' ;
 NUM     : [0-9]+ ;
 STRING  : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
 fragment

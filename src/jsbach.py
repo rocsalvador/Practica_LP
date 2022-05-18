@@ -1,4 +1,6 @@
 from asyncore import write
+from random import Random
+from time import time
 from antlr4 import *
 from antlr4.error.ErrorListener import ErrorListener
 import sys
@@ -276,6 +278,10 @@ class TreeVisitor(jsbachVisitor):
             else:
                 strNote += ',,,'
         return strNote
+    
+    def visitRandom(self, ctx: jsbachParser.RandomContext):
+        rand = Random(time())
+        return Random.randint(rand, self.visit(ctx.expr(0)), self.visit(ctx.expr(1)))
 
 
 class jsbachErrorListener(ErrorListener):
