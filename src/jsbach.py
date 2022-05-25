@@ -25,7 +25,7 @@ class TreeVisitor(jsbachVisitor):
             outFile.write("\n\t\t\\time " + str(self.time[0]) + "/" + str(self.time[1]))
             outFile.write(" \n\t\t\\tempo 4 = " + str(self.tempo) + "\n\t\t")
             outFile.write(self.strNotes)
-            outFile.write("\n\t}\n\t\\layout { }\n\t\midi { }\n}\n")
+            outFile.write("\n\t}\n\t\\layout { }\n\t\\midi { }\n}\n")
 
     def visitRoot(self, ctx: jsbachParser.RootContext):
         mainCtx = None
@@ -87,9 +87,9 @@ class TreeVisitor(jsbachVisitor):
             valueTy = self.visit(ctx.expr(1))
 
         if (type(valueTy) is list and
-            type(value1) is list and 
+            type(value1) is list and
             len(value1) != len(valueTy)):
-                raise Exception("The length of the array of notes and the array of note types differ")
+            raise Exception("The length of the array of notes and the array of note types differ")
 
         if type(value1) is list:
             i = 0
@@ -111,7 +111,7 @@ class TreeVisitor(jsbachVisitor):
         else:
             self.strNotes += self.getLilyNote(value1) + str(valueTy)
         self.strNotes += ' '
-        
+
     def visitRemove(self, ctx: jsbachParser.RemoveContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
         i = self.visit(ctx.expr())
@@ -202,7 +202,7 @@ class TreeVisitor(jsbachVisitor):
 
         if i > len(scopeSymTable[ctx.ID().getText()]):
             raise Exception("Array access out of bound")
-        
+
         return scopeSymTable[ctx.ID().getText()][i-1]
 
     def visitArrayDecl(self, ctx: jsbachParser.ArrayDeclContext):
@@ -213,20 +213,7 @@ class TreeVisitor(jsbachVisitor):
 
     def visitNote(self, ctx: jsbachParser.NoteContext):
         note = ctx.NOTE().getText()
-        if note[0] == 'A':
-            value = 0
-        elif note[0] == 'B':
-            value = 1
-        elif note[0] == 'C':
-            value = 2
-        elif note[0] == 'D':
-            value = 3
-        elif note[0] == 'E':
-            value = 4
-        elif note[0] == 'F':
-            value = 5
-        elif note[0] == 'G':
-            value = 6
+        value = ord(note[0]) - 65
 
         if len(note) == 1:
             scale = 4
@@ -255,21 +242,7 @@ class TreeVisitor(jsbachVisitor):
         return ctx.getText()[1:len(ctx.getText())-1]
 
     def getLilyNote(self, note):
-        mod = note % 7
-        if mod == 0:
-            strNote = 'a'
-        elif mod == 1:
-            strNote = 'b'
-        elif mod == 2:
-            strNote = 'c'
-        elif mod == 3:
-            strNote = 'd'
-        elif mod == 4:
-            strNote = 'e'
-        elif mod == 5:
-            strNote = 'f'
-        elif mod == 6:
-            strNote = 'g'
+        strNote = chr(97 + note % 7)
         if note > 22:
             x = int((note - 23) / 7) + 1
             for _ in range(x):
@@ -282,7 +255,7 @@ class TreeVisitor(jsbachVisitor):
             else:
                 strNote += ',,,'
         return strNote
-    
+
     def visitRandom(self, ctx: jsbachParser.RandomContext):
         rand = Random(time())
         return Random.randint(rand, self.visit(ctx.expr(0)), self.visit(ctx.expr(1)))
