@@ -6,6 +6,7 @@ Fib n |:
         ant_1 <- ant_1 + ant_2
         ant_2 <- aux
         n <- n - 1
+        <:> ant_1 % 8 + A 8
     :|
     <!> ant_1
 :|

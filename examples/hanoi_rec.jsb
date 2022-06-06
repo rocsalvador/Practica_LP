@@ -1,7 +1,7 @@
 ~~~ Notes de Hanoi ~~~
 
 Main |:
-    src <- {C D E F G}
+    src <- {C4 D E F G}
     dst <- {}
     aux <- {}
     HanoiRec #src src dst aux
@@ -13,7 +13,7 @@ HanoiRec n src dst aux |:
         note <- src[#src]
         8< src[#src]
         dst << note
-        <:> note
+        <:> note 8
         HanoiRec (n - 1) aux dst src
     :|
 :|

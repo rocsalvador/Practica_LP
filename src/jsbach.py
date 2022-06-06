@@ -1,4 +1,5 @@
 from random import Random
+from socket import SOCK_STREAM
 from time import time
 from antlr4 import *
 from antlr4.error.ErrorListener import ErrorListener
@@ -10,20 +11,19 @@ from jsbachParser import jsbachParser
 
 
 class TreeVisitor(jsbachVisitor):
-    def __init__(self, initProc="Main", params=[]):
+    def __init__(self, initProc="Main"):
         self.symTableStack = []
         self.funcTable = {}
         self.strNotes = ""
         self.initProc = initProc
-        self.params = params
         self.tempo = 120
         self.time = [4, 4]
 
     def writeNotes(self, outFileName):
         with open(outFileName + ".lily", "w") as outFile:
             outFile.write("\\version \"2.20.0\"\n\\score {\n\t\\absolute {")
-            outFile.write("\n\t\t\\time " + str(self.time[0]) + "/" + str(self.time[1]))
-            outFile.write(" \n\t\t\\tempo 4 = " + str(self.tempo) + "\n\t\t")
+            outFile.write("\n\t\t\\time " + str(int(self.time[0])) + "/" + str(int(self.time[1])))
+            outFile.write(" \n\t\t\\tempo 4 = " + str(int(self.tempo)) + "\n\t\t")
             outFile.write(self.strNotes)
             outFile.write("\n\t}\n\t\\layout { }\n\t\\midi { }\n}\n")
 
@@ -35,7 +35,7 @@ class TreeVisitor(jsbachVisitor):
             else:
                 self.visit(procDef)
         if mainCtx is None:
-            raise Exception(self.initProc + " procedure is not defined")
+            raise Exception("Procedure is not defined: " + self.initProc)
         self.visit(mainCtx)
 
     def visitParenthesis(self, ctx: jsbachParser.ParenthesisContext):
@@ -60,13 +60,13 @@ class TreeVisitor(jsbachVisitor):
 
     def visitProcCall(self, ctx: jsbachParser.ProcCallContext):
         procName = ctx.PROCNAME().getText()
-        if not procName in self.funcTable:
-            raise Exception(procName + " is not defined")
+        if procName not in self.funcTable:
+            raise Exception("Procedure is not defined: " + ctx.PROCNAME().getText())
 
         if len(ctx.expr()) >= len(self.funcTable[procName]):
-            raise Exception("Too many arguments in " + procName + " call")
+            raise Exception("Too many arguments in procedure call: " + procName)
         elif len(ctx.expr()) < len(self.funcTable[procName]) - 1:
-            raise Exception("Too few arguments in " + procName + " call")
+            raise Exception("Too few arguments in procedure call: " + procName)
 
         scopeSymTable = {}
         i = 1
@@ -86,10 +86,8 @@ class TreeVisitor(jsbachVisitor):
         if ctx.expr(1):
             valueTy = self.visit(ctx.expr(1))
 
-        if (type(valueTy) is list and
-            type(value1) is list and
-            len(value1) != len(valueTy)):
-            raise Exception("The length of the array of notes and the array of note types differ")
+        if (type(valueTy) is list and type(value1) is list and len(value1) != len(valueTy)):
+            raise Exception("The length of the array of notes and the array of note types differ: " + ctx.getText())
 
         if type(value1) is list:
             i = 0
@@ -102,25 +100,38 @@ class TreeVisitor(jsbachVisitor):
                 else:
                     self.strNotes += self.getLilyNote(note)
 
-                if type(valueTy) is int:
-                    noteTy = str(valueTy)
+                if type(valueTy) is not list:
+                    noteTy = str(int(valueTy))
                 else:
-                    noteTy = str(valueTy[i])
+                    noteTy = str(int(valueTy[i]))
                 self.strNotes += noteTy
                 i += 1
         else:
-            self.strNotes += self.getLilyNote(value1) + str(valueTy)
+            self.strNotes += self.getLilyNote(value1) + str(int(valueTy))
         self.strNotes += ' '
 
     def visitRemove(self, ctx: jsbachParser.RemoveContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+        arrayName = ctx.ID().getText()
+
         i = self.visit(ctx.expr())
-        del scopeSymTable[ctx.ID().getText()][i-1]
+        if i % 1 != 0:
+            raise Exception("Cannot acces a non integer arrat position: " + ctx.getText())
+        i = int(i)
+        if i > len(scopeSymTable[arrayName]) or i == 0:
+            raise Exception("Array remove out of bound: " + ctx.getText())
+
+        del scopeSymTable[arrayName][i-1]
 
     def visitPush(self, ctx: jsbachParser.PushContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+        arrayName = ctx.ID().getText()
         value = self.visit(ctx.expr())
-        scopeSymTable[ctx.ID().getText()].append(value)
+        if arrayName not in scopeSymTable:
+            scopeSymTable[arrayName] = []
+        if type(scopeSymTable[arrayName]) is not list:
+            raise Exception("Cannot append values to a non array type: " + ctx.getText())
+        scopeSymTable[arrayName].append(value)
 
     def visitArithmetic(self, ctx):
         value_1 = self.visit(ctx.expr(0))
@@ -134,15 +145,15 @@ class TreeVisitor(jsbachVisitor):
             return value_1 * value_2
         elif ctx.DIV():
             if value_2 == 0:
-                raise Exception("Division by 0")
-            return int(value_1 / value_2)
+                raise Exception("Division by 0: " + ctx.getText())
+            return float(value_1 / value_2)
         elif ctx.MOD():
             return value_1 % value_2
 
     def visitProcDef(self, ctx: jsbachParser.ProcDefContext):
         procName = ctx.PROCNAME().getText()
         if procName in self.funcTable:
-            raise Exception(procName + " is already defined")
+            raise Exception("Procedure already defined: " + procName)
 
         if procName != self.initProc:
             self.funcTable[procName] = [ctx]
@@ -156,6 +167,8 @@ class TreeVisitor(jsbachVisitor):
     def visitWrite(self, ctx: jsbachParser.WriteContext):
         for child in ctx.writeParams().getChildren():
             val = self.visit(child)
+            if type(val) is float and val % 1 == 0:
+                val = int(val)
             print(val, end=" ")
         print()
 
@@ -185,8 +198,9 @@ class TreeVisitor(jsbachVisitor):
                 raise Exception("Time feature must be assigned with a two length array")
             self.time = value
         else:
+            varName = ctx.ID().getText()
             scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
-            scopeSymTable[ctx.ID().getText()] = value
+            scopeSymTable[varName] = value
         return 0
 
     def visitNoteExpr(self, ctx: jsbachParser.NoteExprContext):
@@ -198,12 +212,16 @@ class TreeVisitor(jsbachVisitor):
 
     def visitArrayAccess(self, ctx: jsbachParser.ArrayAccessContext):
         scopeSymTable = self.symTableStack[len(self.symTableStack)-1]
+        arrayName = ctx.ID().getText()
         i = self.visit(ctx.expr())
+        if i % 1 != 0:
+            raise Exception("Cannot acces a non integer array position: " + ctx.getText())
+        i = int(i)
 
-        if i > len(scopeSymTable[ctx.ID().getText()]):
-            raise Exception("Array access out of bound")
+        if i > len(scopeSymTable[arrayName]) or i == 0:
+            raise Exception("Array access out of bound: " + ctx.getText())
 
-        return scopeSymTable[ctx.ID().getText()][i-1]
+        return scopeSymTable[arrayName][i - 1]
 
     def visitArrayDecl(self, ctx: jsbachParser.ArrayDeclContext):
         array = []
@@ -214,15 +232,22 @@ class TreeVisitor(jsbachVisitor):
     def visitNote(self, ctx: jsbachParser.NoteContext):
         note = ctx.NOTE().getText()
         value = ord(note[0]) - 65
-
-        if len(note) == 1:
-            scale = 4
-        else:
+        scale = 4
+        if len(note) == 3:
             scale = int(note[1])
-
+            if note[2] == 'b':
+                value += 0.25
+            else:
+                value += 0.75
+        elif len(note) == 2:
+            if note[1] == 'b':
+                value += 0.25
+            elif note[1] == '#':
+                value += 0.75
+            else:
+                scale = int(note[1])
         if not note[0] == 'A' and not note[0] == 'B':
             scale -= 1
-
         value += scale * 7
         return value
 
@@ -234,23 +259,31 @@ class TreeVisitor(jsbachVisitor):
         else:
             return scopeSymTable[ctx.getText()]
 
-    def visitIntValue(self, ctx: jsbachParser.IntValueContext):
-        value = int(ctx.getText())
+    def visitNumValue(self, ctx: jsbachParser.NumValueContext):
+        value = float(ctx.getText())
         return value
 
     def visitString(self, ctx: jsbachParser.StringContext):
         return ctx.getText()[1:len(ctx.getText())-1]
 
     def getLilyNote(self, note):
-        strNote = chr(97 + note % 7)
-        if note > 22:
+        strNote = chr(97 + int(note) % 7)
+        # es -> bem
+        # is -> sost
+        mod = note % 1
+        if mod == 0.25:
+            strNote += 'es'
+        elif mod == 0.75:
+            strNote += 'is'
+
+        if note >= 23:
             x = int((note - 23) / 7) + 1
             for _ in range(x):
                 strNote += '\''
         elif note < 16:
-            if note > 8:
+            if note >= 9:
                 strNote += ','
-            elif note > 1:
+            elif note >= 2:
                 strNote += ',,'
             else:
                 strNote += ',,,'
@@ -272,7 +305,7 @@ def main():
 
     if nArgs < 2:
         print("Usage:")
-        print("python3 path/to/jsbach.py source_file.jsb [initial_procedure] [arguments]")
+        print("python3 path/to/jsbach.py source_file.jsb [initial_procedure]")
         exit(1)
 
     if os.system("antlr4 -Dlanguage=Python3 -no-listener -visitor src/jsbach.g4") > 0:
@@ -286,12 +319,9 @@ def main():
     parser.addErrorListener(JsbachErrorListener())
     tree = parser.root()
 
-    if nArgs >= 3:
+    if nArgs == 3:
         initProc = sys.argv[2]
-        if nArgs == 3:
-            visitor = TreeVisitor(initProc)
-        else:
-            visitor = TreeVisitor(initProc, sys.argv[3:])
+        visitor = TreeVisitor(initProc)
     else:
         visitor = TreeVisitor()
     visitor.visit(tree)
@@ -301,9 +331,10 @@ def main():
 
     os.system("lilypond " + outFileName + ".lily")
     os.system("timidity -Ow -o " + outFileName + ".wav " + outFileName + ".midi")
+    os.system("ffmpeg -y -i " + outFileName + ".wav -codec:a libmp3lame -qscale:a 2 " + outFileName + ".mp3")
 
     if os.system("command -v ffplay") == 0:
-        os.system("ffplay -nodisp -autoexit " + outFileName + ".wav")
+        os.system("ffplay -nodisp -autoexit " + outFileName + ".mp3")
 
 
 if __name__ == '__main__':

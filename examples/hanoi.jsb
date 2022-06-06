@@ -7,6 +7,8 @@ Hanoi n ori dst aux |:
     if n > 0 |:
         Hanoi (n - 1) ori aux dst
         <!> ori "->" dst
+        ~~~ Es toca n com a corxera ~~~
+        <:> n % 8 + C 8
         Hanoi (n - 1) aux dst ori
     :|
 :|

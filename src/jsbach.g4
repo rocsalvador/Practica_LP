@@ -23,7 +23,7 @@ statement
         : IF expr '|:' statements ':|' (ELSE '|:' statements ':|')?     # if
         | WHILE expr '|:' statements ':|'                               # while
         | READ ID                                                       # read
-        | (ID|TEMPO|TIME) ASSIG expr                                    # assign                              
+        | (ID|TEMPO|TIME) ASSIG expr                                    # assign
         | WRITE writeParams                                             # write
         | REPROD expr expr?                                             # reprod
         | PROCNAME expr*                                                # procCall
@@ -43,7 +43,7 @@ expr
         | ID '[' expr ']'                       # arrayAccess
         | '#' ID                                # arraySize
         | '{' expr* '}'                         # arrayDecl
-        | NUM                                   # intValue
+        | NUM                                   # numValue
         | ID                                    # id
         | RAND expr expr                        # random
         | note                                  # noteExpr
@@ -64,16 +64,14 @@ LT      : '<' ;
 LE      : '<=' ;
 EQ      : '=' ;
 NEQ     : '/=' ;
-NOTE    : ('C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B') [0-8]? ;
-ID      : ('a'..'z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
-PROCNAME: ('A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')+ ;
+NOTE    : ('C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B') [0-8]? ('#'|'b')? ;
+ID      : ('a'..'z') ('a'..'z'|'A'..'Z'|'_'|'-'|'0'..'9')* ;
+PROCNAME: ('A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'-'|'0'..'9')+ ;
 TEMPO   : '_tp' ;
 TIME    : '_tm' ;
 RAND    : '_Rand' ;
-NUM     : [0-9]+ ;
-STRING  : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
-fragment
-ESC_SEQ : '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\') ;
+NUM     : [0-9]+ ('.' [0-9]+)? ;
+STRING  : '"' ( ~('"') )* '"' ;
 SUM     : '+' ;
 MINUS   : '-' ;
 MUL     : '*' ;
