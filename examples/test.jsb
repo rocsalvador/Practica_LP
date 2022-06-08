@@ -8,8 +8,8 @@ Main |:
     <:> d 16
 
     <:> {Ab A#}
-    <!> "El la bemmoll te un valor de:" Ab A4#
-    <!> "El la sostingut te un valor de:" A4# A#
+    <!> "El la bemmoll te un valor de:" Ab A4# A + 0.25
+    <!> "El la sostingut te un valor de:" A4# A# A + 0.75
 
     while i < 10 |:
         <:> _Rand C C5 8

@@ -308,9 +308,6 @@ def main():
         print("python3 path/to/jsbach.py source_file.jsb [initial_procedure]")
         exit(1)
 
-    if os.system("antlr4 -Dlanguage=Python3 -no-listener -visitor src/jsbach.g4") > 0:
-        exit(1)
-
     input_stream = FileStream(sys.argv[1])
     lexer = jsbachLexer(input_stream)
     lexer.addErrorListener(JsbachErrorListener())

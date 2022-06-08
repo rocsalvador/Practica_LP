@@ -1,6 +1,12 @@
 # El doble intèrpret de JSBach
 
-![JSBach](img/bach.png)
+## Execució
+
+```bash
+antlr4 -Dlanguage=Python3 -no-listener -visitor jsbach.g4
+
+python3 jsbach.py source_file.jsb [initial_procedure]
+```
 
 ## Extensions
 ### Indicar el tipus de la nota
@@ -53,7 +59,20 @@ Main |:
 :|
 ```
 
-### Generar nombres aleatòris (No és molt útil però per generar partitures horribles va perfecte)
+### Sostinguts i bemolls
+
+Aquesta extensió de JSBach permet tocar notes amb el to modificat, ja sigui amb un sostingut o un bemoll. Per indicar el to d'una nota es pot fer de diferents maneres:
+
+```jsbach
+Main |:
+    ~~~ Indicant amb una b (bemoll) o un # (sostingut) darrere la nota ~~~
+    <:> A4b A#
+    ~~~ Sumant 0.25 (bemoll) o 0.75 (sostingut) a la nota base ~~~
+    <:> A + 0.25 A + 0.75
+:|
+```
+
+### Generar nombres aleatòris (Perfecte per composar)
 
 Aquesta extensió de JSBach permet generar nombres aleatòris mitjançant una funció anomenada ```_Rand``` que té com entrada el rang en el que s'ha de generar el valor i que retorna un enter.
 
