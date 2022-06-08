@@ -65,7 +65,7 @@ Main |:
 
 ### Configurar el tempo i el compàs
 
-Aquesta extensió de JSBach permet modificar el tempo i el compàs mitjançant dues variables especials: ```_tm``` (compas) i ```tp```(tempo). ```_tm``` s'ha d'assignar amb un vector de dues dimensions on el primer element indica la durada del compàs i el segon element el tipus de nota a la que fa referència la durada del compàs, és a dir, que si ```_tm  <- {2 4}``` es reproduiran 2 negres (4) per compàs.
+Aquesta extensió de JSBach permet modificar el tempo i el compàs mitjançant dues variables especials: ```_tm``` (compas) i ```_tp```(tempo). ```_tm``` s'ha d'assignar amb un vector de dues dimensions on el primer element indica la durada del compàs i el segon element el tipus de nota a la que fa referència la durada del compàs, és a dir, que si ```_tm  <- {2 4}``` es reproduiran 2 negres (4) per compàs.
 
 ```jsbach
 Main |:
