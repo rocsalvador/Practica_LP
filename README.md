@@ -30,9 +30,13 @@ sudo apt install antlr4 lilypond timidity ffmpeg
 
 ## Execució
 
+Per generar el visitor a partir de la grmàtica:
 ```bash
-antlr4 -Dlanguage=Python3 -no-listener -visitor jsbach.g4
+antlr4 -Dlanguage=Python3 -no-listener -visitor src/jsbach.g4
+```
 
+Per interpretar un arxiu amb codi JSBach
+```bash
 python3 src/jsbach.py source_file.jsb [initial_procedure]
 ```
 
