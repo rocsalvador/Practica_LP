@@ -35,7 +35,7 @@ Per generar el visitor a partir de la grmàtica:
 antlr4 -Dlanguage=Python3 -no-listener -visitor src/jsbach.g4
 ```
 
-Per interpretar un arxiu amb codi JSBach
+Per interpretar un arxiu amb codi JSBach:
 ```bash
 python3 src/jsbach.py source_file.jsb [initial_procedure]
 ```
