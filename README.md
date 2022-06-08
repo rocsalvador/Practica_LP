@@ -1,11 +1,39 @@
 # El doble intèrpret de JSBach
 
+![img](img/bach.png)
+
+JSBach és un llenguatge de programació orientat a la composició algorísmica. Amb JSBach s'utilitzen construccions imperatives per generar composicions que donen lloc a partitures que poden ser desades en diferents formats digitals.
+
+![Més informació](https://github.com/jordi-petit/lp-jsbach-2022)
+
+## Dependències
+
+Per tal de que el programa s'executi i generi tots els arxius de sortida es necessiten els següents programes:
+
+- ```antlr4-python3-runtime```
+- ```antlr4```
+- ```lilypond```
+- ```timidity```
+- ```ffmpeg```
+
+Per instal·lar ```antlr4-python3-runtime```:
+
+```bash
+pip3 install antlr4-python3-runtime
+```
+
+Per instal·lar la resta (a Ubuntu o derivats):
+
+```bash
+sudo apt install antlr4 lilypond timidity ffmpeg
+```
+
 ## Execució
 
 ```bash
 antlr4 -Dlanguage=Python3 -no-listener -visitor jsbach.g4
 
-python3 jsbach.py source_file.jsb [initial_procedure]
+python3 src/jsbach.py source_file.jsb [initial_procedure]
 ```
 
 ## Extensions
